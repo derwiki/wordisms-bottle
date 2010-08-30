@@ -1,3 +1,4 @@
+import json
 import time
 
 import bottle
@@ -13,12 +14,12 @@ bottle.debug(True)
 @route('/')
 def index():
 	try:
-		context = dict(time_rendered=time.time(), name='Adam Derewecki')
+		context = dict(time_rendered=time.time(), author='Adam Derewecki')
 		resp = Response(**context)
 		resp.put()
-		context['models'] = Response.all().fetch(50)
-		context['gql'] = Response.gql('LIMIT 10')
-		return str(context)
+		context['pageloads'] = Response.all().fetch(50)
+		return bottle.template('index', context)
+
 	except Exception, e:
 		import traceback
 		return traceback.format_exc()
