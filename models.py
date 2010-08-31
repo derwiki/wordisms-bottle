@@ -12,10 +12,14 @@ class User(db.Expando):
 	email = db.StringProperty()
 
 class Wordlist(db.Expando):
+	def __str__():
+		return "models.Wordlist"
+#	def kind():
+#		return "models.Wordlist"
 	name = db.StringProperty()
 	creator = User()
 
 class Definition(db.Expando):
 	word = db.StringProperty()
 	definition = db.StringProperty()
-	wordlist = Wordlist()
+	wordlist = db.ReferenceProperty(Wordlist)

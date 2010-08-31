@@ -30,19 +30,35 @@ def index(name=None):
 	except Exception, e:
 		return traceback.format_exc()
 
-@route('/add_word/:word/:definition')
-def add_word(word, definition):
+@route('/add_word/:wordlist_key/:word/:definition')
+def add_word(wordlist_key, word, definition):
 	try:
-		word_definition = dict(word=word, definition=definition)
+		wordlist = models.Wordlist.get_by_id(wordlist_key)
+		word_definition = dict(wordlist_key=wordlist_key, word=word, definition=definition)
 		definition = models.Definition(**word_definition)
 		definition.put()
 		return json.dumps(dict(result='success', **word_definition))
 	except Exception, e:
 		return json.dumps(dict(result='failure', reason=traceback.format_exc(), **word_definition))
 
-@route('/list_words/:wordlist_id')
-def list_words(wordlist_id):
-	pass
+@route('/create_wordlist/:name')
+def create_wordlist(name):
+	wordlist = models.Wordlist(name=name)
+	wordlist.put()
+	return dict(name=name, wordlist_key=wordlist.key().id())
+
+@route('/list_wordlists')
+def list_wordlists():
+	context = dict()
+	wordlists = models.Wordlist.all()
+	return str([(wordlist.key(), wordlist.name) for wordlist in wordlists])
+
+@route('/enumerate_wordlist/:wordlist_id#[0-9]+#')
+def enumerate_wordlist(wordlist_id):
+	wordlist = models.Wordlist.get_by_id(int(wordlist_id))
+	return wordlist.
+	return definitions
+	return wordlist
 
 
 @route('/crash')
