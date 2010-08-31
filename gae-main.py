@@ -1,9 +1,10 @@
 import json
 import time
+import traceback
 
 import bottle
 from bottle import route, run
-from google.appengine.ext.webapp import util 
+from google.appengine.ext.webapp import util
 from google.appengine.ext import db
 
 from models import Response
@@ -21,12 +22,23 @@ def index(name=None):
 		context = dict(time_rendered=time.time(), author=name)
 		resp = Response(**context)
 		resp.put()
-		context['pageloads'] = Response.all().fetch(50)
+		context['pageloads'] = Response.all().order('-time_rendered').fetch(50)
+		context['headers'] = bottle.request.headers
 		return bottle.template('index', context)
 
 	except Exception, e:
-		import traceback
 		return traceback.format_exc()
+
+@route('/:word/:definition')
+def add_word(word, definition):
+	try:
+		definition = Definition(word=word, definition=definition)
+		definition.put()
+	except Exception, e:
+		return json.dumps(result='failure', reason=traceback.format_exc())
+
+@route('/listwords/:
+
 
 @route('/crash')
 def crash():

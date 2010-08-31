@@ -6,3 +6,6 @@ class Response(db.Expando):
 
 	def __str__(self):
 		return "%s, %s" % (self.time, self.author)
+
+class Definition(db.Expando):
+	wordlist_id = db.IntegerProperty()
