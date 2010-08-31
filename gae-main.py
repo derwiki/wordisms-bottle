@@ -8,6 +8,7 @@ from google.appengine.ext.webapp import util
 from google.appengine.ext import db
 
 from models import Response
+import models
 
 
 bottle.debug(True)
@@ -29,15 +30,19 @@ def index(name=None):
 	except Exception, e:
 		return traceback.format_exc()
 
-@route('/:word/:definition')
+@route('/add_word/:word/:definition')
 def add_word(word, definition):
 	try:
-		definition = Definition(word=word, definition=definition)
+		word_definition = dict(word=word, definition=definition)
+		definition = models.Definition(**word_definition)
 		definition.put()
+		return json.dumps(dict(result='success', **word_definition))
 	except Exception, e:
-		return json.dumps(result='failure', reason=traceback.format_exc())
+		return json.dumps(dict(result='failure', reason=traceback.format_exc(), **word_definition))
 
-@route('/listwords/:
+@route('/list_words/:wordlist_id')
+def list_words(wordlist_id):
+	pass
 
 
 @route('/crash')

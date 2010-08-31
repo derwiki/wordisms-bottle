@@ -7,5 +7,15 @@ class Response(db.Expando):
 	def __str__(self):
 		return "%s, %s" % (self.time, self.author)
 
+class User(db.Expando):
+	username = db.StringProperty()
+	email = db.StringProperty()
+
+class Wordlist(db.Expando):
+	name = db.StringProperty()
+	creator = User()
+
 class Definition(db.Expando):
-	wordlist_id = db.IntegerProperty()
+	word = db.StringProperty()
+	definition = db.StringProperty()
+	wordlist = Wordlist()
