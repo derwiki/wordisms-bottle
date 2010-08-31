@@ -11,10 +11,14 @@ from models import Response
 
 bottle.debug(True)
 
-@route('/')
-def index():
+@route('/favicon.ico')
+def favicon():
+	return None
+
+@route('/:name')
+def index(name=None):
 	try:
-		context = dict(time_rendered=time.time(), author='Adam Derewecki')
+		context = dict(time_rendered=time.time(), author=name)
 		resp = Response(**context)
 		resp.put()
 		context['pageloads'] = Response.all().fetch(50)
