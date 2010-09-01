@@ -55,7 +55,7 @@ def update_definition(definition_id, new_definition):
 def create_wordlist(name):
 	wordlist = models.Wordlist(name=name)
 	wordlist.put()
-	return dict(name=name, wordlist_key=wordlist.key().id())
+	return dict(name=name, id=wordlist.key().id())
 
 @route('/list_wordlists')
 def list_wordlists():
