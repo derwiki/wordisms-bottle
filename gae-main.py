@@ -17,7 +17,7 @@ bottle.debug(True)
 def favicon():
 	return None
 
-@route('/:name')
+@route('/access/:name')
 def index(name=None):
 	try:
 		context = dict(time_rendered=time.time(), author=name)
@@ -30,16 +30,17 @@ def index(name=None):
 	except Exception, e:
 		return traceback.format_exc()
 
-@route('/add_word/:wordlist_key/:word/:definition')
-def add_word(wordlist_key, word, definition):
+@route('/add_word/:wordlist_id/:word/:definition')
+def add_word(wordlist_id, word, definition):
 	try:
-		wordlist = models.Wordlist.get_by_id(wordlist_key)
-		word_definition = dict(wordlist_key=wordlist_key, word=word, definition=definition)
+		wordlist_id = int(wordlist_id)
+		wordlist = models.Wordlist.get_by_id(wordlist_id)
+		word_definition = dict(wordlist_key=wordlist_id, word=word, definition=definition)
 		definition = models.Definition(**word_definition)
 		definition.put()
-		return json.dumps(dict(result='success', **word_definition))
+		return json.dumps(dict(result='success', id=definition.key().id(),  **word_definition))
 	except Exception, e:
-		return json.dumps(dict(result='failure', reason=traceback.format_exc(), **word_definition))
+		return json.dumps(dict(wordlist_key=wordlist_key, result='failure', reason=traceback.format_exc()))#, **word_definition))
 
 @route('/create_wordlist/:name')
 def create_wordlist(name):
@@ -56,7 +57,7 @@ def list_wordlists():
 @route('/enumerate_wordlist/:wordlist_id#[0-9]+#')
 def enumerate_wordlist(wordlist_id):
 	wordlist = models.Wordlist.get_by_id(int(wordlist_id))
-	return wordlist.
+	return wordlist.definition_set
 	return definitions
 	return wordlist
 
