@@ -12,8 +12,10 @@ class User(db.Expando):
 	email = db.StringProperty()
 
 class Wordlist(db.Expando):
-	def __str__():
+	def __str__(self):
 		return "models.Wordlist"
+
+	__repr__ = __str__
 #	def kind():
 #		return "models.Wordlist"
 	name = db.StringProperty()

@@ -35,12 +35,21 @@ def add_word(wordlist_id, word, definition):
 	try:
 		wordlist_id = int(wordlist_id)
 		wordlist = models.Wordlist.get_by_id(wordlist_id)
-		word_definition = dict(wordlist_key=wordlist_id, word=word, definition=definition)
+		word_definition = dict(wordlist=wordlist, word=word, definition=definition)
 		definition = models.Definition(**word_definition)
 		definition.put()
-		return json.dumps(dict(result='success', id=definition.key().id(),  **word_definition))
+		word_definition.pop('wordlist')
+		return json.dumps(dict(result='success', id=definition.key().id(), wordlist_id=wordlist.key().id(), **word_definition))
 	except Exception, e:
-		return json.dumps(dict(wordlist_key=wordlist_key, result='failure', reason=traceback.format_exc()))#, **word_definition))
+		return json.dumps(dict(wordlist=wordlist.key().id(), result='failure', reason=traceback.format_exc()))#, **word_definition))
+
+@route('/update_definition/:definition_id/:new_definition')
+def update_definition(definition_id, new_definition):
+	definition_id = int(definition_id)
+	definition = models.Definition.get_by_id(definition_id)
+	definition.definition = new_definition
+	definition.put()
+	return dict(word=definition.word, definition=definition.definition)
 
 @route('/create_wordlist/:name')
 def create_wordlist(name):
@@ -52,14 +61,12 @@ def create_wordlist(name):
 def list_wordlists():
 	context = dict()
 	wordlists = models.Wordlist.all()
-	return str([(wordlist.key(), wordlist.name) for wordlist in wordlists])
+	return dict((wordlist.key().id(), dict(name=wordlist.name, entries=len(tuple(wordlist.definition_set)))) for wordlist in wordlists)
 
 @route('/enumerate_wordlist/:wordlist_id#[0-9]+#')
 def enumerate_wordlist(wordlist_id):
 	wordlist = models.Wordlist.get_by_id(int(wordlist_id))
-	return wordlist.definition_set
-	return definitions
-	return wordlist
+	return dict((definition.word, definition.definition) for definition in wordlist.definition_set)
 
 
 @route('/crash')
