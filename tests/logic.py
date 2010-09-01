@@ -16,7 +16,6 @@ class TestLogic(unittest.TestCase):
 
 		wordlists = api.list_wordlists()
 		print wordlists
-		
 
 if __name__ == "__main__":
 	unittest.main()
