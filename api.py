@@ -12,6 +12,24 @@ import models
 
 bottle.debug(True)
 
+
+@route('/')
+def index():
+	context = dict(
+		wordlists=list_wordlists().items()
+	)
+	return bottle.template('index', context)
+
+@route('/wordlist/:wordlist_id')
+def wordlist(wordlist_id):
+	wordlist = models.Wordlist.get_by_id(int(wordlist_id))
+	context = dict(
+		name=wordlist.name,
+		wordlist=enumerate_wordlist(int(wordlist_id)),
+	)
+	#return str(context)
+	return bottle.template('wordlist', context)
+
 @route('/favicon.ico')
 def favicon():
 	return None
