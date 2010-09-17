@@ -1,4 +1,6 @@
+from functools import wraps
 import json
+import random
 import time
 import traceback
 
@@ -9,9 +11,17 @@ from google.appengine.ext import db
 
 import models
 
-
 bottle.debug(True)
 
+def debug(f):
+	@wraps(f)
+	def wrapper(*args, **kwargs):
+		try:
+			res = f(*args, **kwargs)
+			return res
+		except Exception:
+			return json.dumps(dict(result='failure', reason=traceback.format_exc()))
+	return wrapper
 
 @route('/')
 def index():
@@ -27,13 +37,11 @@ def wordlist(wordlist_id):
 		name=wordlist.name,
 		wordlist=enumerate_wordlist(int(wordlist_id)),
 	)
-	#return str(context)
 	return bottle.template('wordlist', context)
 
 @route('/favicon.ico')
 def favicon():
 	return None
-	return traceback.format_exc()
 
 API_ROOT = '/api'
 
@@ -84,31 +92,38 @@ def enumerate_wordlist(wordlist_id):
 	wordlist = models.Wordlist.get_by_id(int(wordlist_id))
 	return [dict(word=definition.word, definition=definition.definition, id=definition.key().id()) for definition in wordlist.definition_set]
 
-from functools import wraps
-def debug(f):
-	@wraps(f)
-	def wrapper(*args, **kwargs):
-		try:
-			res = f(*args, **kwargs)
-			return res
-		except Exception:
-			return json.dumps(dict(result='failure', reason=traceback.format_exc()))
-	return wrapper
-
 @route(API_ROOT + '/new_question/:wordlist_id')
 @debug
 def new_question(wordlist_id):
-	wordlist = enumerate_wordlist(wordlist_id)
-	kwargs = dict(
-		definition=models.Definition.get_by_id(int(wordlist[0]['id'])),
-		choice_a=models.Definition.get_by_id(int(wordlist[1]['id'])),
-		choice_b=models.Definition.get_by_id(int(wordlist[2]['id'])),
-		choice_c=models.Definition.get_by_id(int(wordlist[3]['id'])),
-		answer=None,
+	definitions = enumerate_wordlist(wordlist_id)
+	assert len(definitions) > 3, "Not enough definitions in this wordlist for a question"
+
+	definition_ids = [int(definition['id']) for definition in definitions]
+	random_list_item = lambda l: l[random.randint(0, len(l) - 1)]
+
+	choice_ids = []
+	while len(choice_ids) < 4:
+		candidate_id = random_list_item(definition_ids)
+		if candidate_id in choice_ids:
+			continue
+		else:
+			choice_ids.append(candidate_id)
+
+	load_def_by_id = lambda id: models.Definition.get_by_id(id)
+	choices = [load_def_by_id(choice_id) for choice_id in choice_ids]
+	definition = random_list_item(choices)
+
+	question_kwargs = dict(
+		definition=definition,
+		choice_a=choices[0],
+		choice_b=choices[1],
+		choice_c=choices[2],
+		choice_d=choices[3],
 	)
-	question = models.Question(**kwargs)
+
+	question = models.Question(**question_kwargs)
 	question.put()
-	return str(question.key().id())
+	return question.key().id()
 
 @route(API_ROOT + '/show_question/:question_id')
 def show_question(question_id):

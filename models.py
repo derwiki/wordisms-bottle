@@ -31,8 +31,11 @@ class Question(db.Model):
 	choice_d = db.ReferenceProperty(reference_class=Definition, collection_name='choice_d_set')
 	answer = db.ReferenceProperty(reference_class=Definition, collection_name='answer_set')
 
+	_fields = sorted([field for field in locals().keys() if not field.startswith('_')])
+
 	def __str__(self):
-		fields = 'definition,choice_a,choice_b,choice_c,choice_d,answer'.split(',')
-		return '; '.join('%s: %s' % (field, getattr(self, field)) for field in fields)
+		fields = ['question_id: %s' % self.key().id()]
+		fields += ['%s: %s' % (field, getattr(self, field)) for field in self._fields]
+		return '; '.join(fields)
 
 	__repr__ = __str__
