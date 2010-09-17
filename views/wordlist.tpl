@@ -1,8 +1,8 @@
 Wordlist: {{name}}
 
 <dl>
-% for word, definition in wordlist.items():
-	<dt>{{word}}</dt>
-	<dd>{{definition}}</dd>
+% for definition in wordlist:
+	<dt>{{definition['word']}} ({{definition['id']}})</dt>
+	<dd>{{definition['definition']}}</dd>
 % end
 </dl>

@@ -1,2 +1,2 @@
 #! /bin/bash
-python ~/google_appengine/dev_appserver.py ~/src/wordisms-bottle
+python ~/google_appengine/dev_appserver.py ~/src/wordisms-bottle --datastore_path=datastore
