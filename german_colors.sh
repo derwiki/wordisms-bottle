@@ -8,3 +8,4 @@ curl http://localhost:8080/api/add_word/1/rot/red
 curl http://localhost:8080/api/add_word/1/dunkelblau/dark%20blue
 curl http://localhost:8080/api/add_word/1/hellblau/light%20blue
 curl http://localhost:8080/api/new_question/1
+echo

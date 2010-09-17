@@ -35,7 +35,7 @@ def wordlist(wordlist_id):
 	wordlist = models.Wordlist.get_by_id(int(wordlist_id))
 	context = dict(
 		name=wordlist.name,
-		wordlist=enumerate_wordlist(int(wordlist_id)),
+		wordlist=json.loads(enumerate_wordlist(int(wordlist_id))),
 	)
 	return bottle.template('wordlist', context)
 
@@ -90,13 +90,13 @@ def list_wordlists():
 @route(API_ROOT + '/enumerate_wordlist/:wordlist_id#[0-9]+#')
 def enumerate_wordlist(wordlist_id):
 	wordlist = models.Wordlist.get_by_id(int(wordlist_id))
-	return [dict(word=definition.word, definition=definition.definition, id=definition.key().id()) for definition in wordlist.definition_set]
+	return json.dumps([dict(word=definition.word, definition=definition.definition, id=definition.key().id()) for definition in wordlist.definition_set])
 
 @route(API_ROOT + '/new_question/:wordlist_id')
-@debug
 def new_question(wordlist_id):
-	definitions = enumerate_wordlist(wordlist_id)
-	assert len(definitions) > 3, "Not enough definitions in this wordlist for a question"
+	definitions = json.loads(enumerate_wordlist(wordlist_id))
+	if len(definitions) < 4:
+		return dict(result='failure', reason='Not enough definitions in this wordlist for a question')
 
 	definition_ids = [int(definition['id']) for definition in definitions]
 	random_list_item = lambda l: l[random.randint(0, len(l) - 1)]
@@ -123,13 +123,19 @@ def new_question(wordlist_id):
 
 	question = models.Question(**question_kwargs)
 	question.put()
-	return question.key().id()
+	return json.dumps(dict(id=question.key().id(), definition=str(definition), result='success'))
 
-@route(API_ROOT + '/show_question/:question_id')
+@route('/show_question/:question_id')
 def show_question(question_id):
 	question = models.Question.get_by_id(int(question_id))
-	return str(question.choice_a.word)
-	return str(question)
+	if question is None:
+		return 'Invalid question_id: %s' % question_id
+	question_str = '''%s:
+	a) %s
+	b) %s
+	c) %s
+	d) %s''' % (question.definition.definition, question.choice_a.word, question.choice_b.word, question.choice_c.word, question.choice_d.word)
+	return question_str
 
 @route('/crash')
 def crash():
