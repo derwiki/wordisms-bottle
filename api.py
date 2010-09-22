@@ -53,10 +53,10 @@ def add_word(wordlist_id, word, definition):
 		word_definition = dict(wordlist=wordlist, word=word, definition=definition)
 		definition = models.Definition(**word_definition)
 		definition.put()
-		word_definition.pop('wordlist')
+		del word_definition['wordlist']
 		return json.dumps(dict(result='success', id=definition.key().id(), wordlist_id=wordlist.key().id(), **word_definition)) + '\n'
 	except Exception, e:
-		return json.dumps(dict(wordlist=wordlist.key().id(), result='failure', reason=traceback.format_exc()))
+		return json.dumps(dict(wordlist_id=wordlist_id, result='failure', reason=traceback.format_exc()))
 
 @route(API_ROOT + '/remove_word_by_id/:word_id')
 def remove_word_by_id(word_id):
@@ -130,12 +130,60 @@ def show_question(question_id):
 	question = models.Question.get_by_id(int(question_id))
 	if question is None:
 		return 'Invalid question_id: %s' % question_id
-	question_str = '''%s:
+	return _format_question(question)
+
+def _format_question(question):
+	return '''%s:
 	a) %s
 	b) %s
 	c) %s
-	d) %s''' % (question.definition.definition, question.choice_a.word, question.choice_b.word, question.choice_c.word, question.choice_d.word)
-	return question_str
+	d) %s\n''' % (question.definition.definition, question.choice_a.word, question.choice_b.word, question.choice_c.word, question.choice_d.word)
+
+@route('/answer_question/:raw_question_id/:raw_answer')
+def answer_question(raw_question_id, raw_answer):
+	question_id = int(raw_question_id)
+	answer_char = raw_answer[0].lower()
+
+	if answer_char not in 'abcd':
+		return json.dumps(dict(id=question_id, result='failure', reason='Invalid answer - \'%s\'' % answer_char))
+
+	question = models.Question.get_by_id(question_id)
+	if question.answer:
+		raise Exception("This question has already been answered")
+
+	question.answer = getattr(question, 'choice_%s' % answer_char)
+	question.put()
+
+	correct = (question.answer.key() == question.definition.key())
+	return json.dumps(dict(id=question_id, correct=correct, answer_given=str(question.answer), correct_answer=str(question.definition)))
+
+	return _format_question(question) + str(question) + '\n'
+
+def _import_terms(infile):
+	terms = []
+	exceptions = []
+	for line in infile:
+		term = line.strip().split(',')
+		if len(term) != 2:
+			exceptions.append((term, line))
+		else:
+			terms.append(term)
+
+	return terms, exceptions
+
+def _bulk_load_terms(infile, wordlist_id):
+	'''infile is a file descriptor that is ready to read'''
+	terms, exceptions = _import_terms(infile)
+	successes = 0
+	failures = len(exceptions)
+	for word, definition in terms:
+		respjson = add_word(wordlist_id, word, definition)
+		resp = json.loads(respjson)
+		if word == resp['word'] and definition == resp['definition']:
+			successes += 1
+		else:
+			failures += 1
+	return successes, failures
 
 @route('/crash')
 def crash():

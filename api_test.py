@@ -1,5 +1,6 @@
 '''Basic coverage unittest that interacts with Wordisms over the GAE dev server'''
 
+from cStringIO import StringIO
 import random
 import simplejson as json
 import string
@@ -75,6 +76,10 @@ class ApiTest(unittest.TestCase):
 		# make a question without enough definitions in the wordlist
 		respjson = call_api('new_question/%s' % (wordlist_id))
 		self.assertEqual(respjson['result'], 'failure')
+
+	def test_import_terms_from_csv(self):
+		csv_file = StringIO()
+		terms, exceptions = api._import_terms(csv_file)
 
 if __name__ == '__main__':
 	unittest.main()
